@@ -6,19 +6,18 @@ import math
 import copy
 import gf2matrix
 
-def binary_matrix_rank_test(bits,M=32,Q=32):
+def binary_matrix_rank_test(bits, M=32, Q=32, alpha=0.01, verbose=False):
     n = len(bits)
-    N = int(math.floor(n/(M*Q))) #Number of blocks
-    print("  Number of blocks %d" % N)
-    print("  Data bits used: %d" % (N*M*Q))
-    print("  Data bits discarded: %d" % (n-(N*M*Q))) 
+    N = int(math.floor(n/(M*Q))) # 块数
+    if verbose:
+        print("  块数 %d" % N)
+        print("  用掉的 bit 数: %d" % (N*M*Q))
+        print("  丢掉的 bit 数: %d" % (n-(N*M*Q))) 
     
     if N < 38:
-        print("  Number of blocks must be greater than 37")
-        p = 0.0
-        return False,p,None
+        return False, None, {"reason": "块数太少：至少要 38 个块才能做这个测试"}
         
-    # Compute the reference probabilities for FM, FMM and remainder 
+    # 下面算的是标准里给的理论概率
     r = M
     product = 1.0
     for i in range(r):
@@ -39,17 +38,17 @@ def binary_matrix_rank_test(bits,M=32,Q=32):
     
     LR_prob = 1.0 - (FR_prob + FRM1_prob)
     
-    FM = 0      # Number of full rank matrices
-    FMM = 0     # Number of rank -1 matrices
+    FM = 0      # 满秩矩阵个数
+    FMM = 0     # 秩少 1 的矩阵个数
     remainder = 0
     for blknum in range(N):
         block = bits[blknum*(M*Q):(blknum+1)*(M*Q)]
-        # Put in a matrix
+        # 转成矩阵
         matrix = gf2matrix.matrix_from_bits(M,Q,block,blknum) 
-        # Compute rank
+        # 算秩
         rank = gf2matrix.rank(M,Q,matrix,blknum)
 
-        if rank == M: # count the result
+        if rank == M:
             FM += 1
         elif rank == M-1:
             FMM += 1  
@@ -60,11 +59,12 @@ def binary_matrix_rank_test(bits,M=32,Q=32):
     chisq += (((FMM-(FRM1_prob*N))**2)/(FRM1_prob*N))
     chisq += (((remainder-(LR_prob*N))**2)/(LR_prob*N))
     p = math.e **(-chisq/2.0)
-    success = (p >= 0.01)
+    success = (p >= alpha)
     
-    print("  Full Rank Count  = ",FM)
-    print("  Full Rank -1 Count = ",FMM)
-    print("  Remainder Count = ",remainder) 
-    print("  Chi-Square = ",chisq)
+    if verbose:
+        print("  满秩矩阵个数  = ", FM)
+        print("  秩少 1 的个数 = ", FMM)
+        print("  其它情况个数  = ", remainder) 
+        print("  卡方值 = ", chisq)
 
     return (success, p, None)

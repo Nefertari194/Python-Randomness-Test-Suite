@@ -3,10 +3,7 @@
 from __future__ import print_function
 
 import math
-#from scipy.special import gamma, gammainc, gammaincc
 from gamma_functions import *
-
-import random
 
 def probs(K,M,i):
     M8 =      [0.2148, 0.3672, 0.2305, 0.1875]
@@ -20,11 +17,11 @@ def probs(K,M,i):
     elif (M == 1000):   return M1000[i]
     else:               return M10000[i]
 
-def longest_run_ones_in_a_block_test(bits):
+def longest_run_ones_in_a_block_test(bits, alpha=0.01, verbose=False):
     n = len(bits)
 
     if n < 128:
-        return (False,1.0,None)
+        return False, None, {"reason": "长度不够：这个测试至少要 128 位"}
     elif n<6272:
         M = 8
     elif n<750000:
@@ -32,27 +29,31 @@ def longest_run_ones_in_a_block_test(bits):
     else:
         M = 10000
             
-    # compute new values for K & N
+    # 根据块大小确定几个参数
     if M==8:
         K=3
-        N=16
+        min_N = 16
     elif M==128:
         K=5
-        N=49
+        min_N = 49
     else:
         K=6
-        N=75
+        min_N = 75
+
+    N = int(math.floor(n/M))
+    if N < min_N:
+        return False, None, {"reason": "有效块数太少（N=%d < %d）" % (N, min_N)}
         
-    # Table of frequencies
+    # 统计表
     v = [0,0,0,0,0,0,0]
 
-    for i in range(N): # over each block
-        #find longest run
-        block = bits[i*M:((i+1)*M)] # Block i
+    for i in range(N): # 遍历每个块
+        # 找最长连续 1
+        block = bits[i*M:((i+1)*M)]
         
         run = 0
         longest = 0
-        for j in range(M): # Count the bits.
+        for j in range(M): # 数位
             if block[j] == 1:
                 run += 1
                 if run > longest:
@@ -81,20 +82,20 @@ def longest_run_ones_in_a_block_test(bits):
             elif longest == 15: v[5] += 1
             else:               v[6] += 1
     
-    # Compute Chi-Sq
+    # 算卡方
     chi_sq = 0.0
     for i in range(K+1):
         p_i = probs(K,M,i)
         upper = (v[i] - N*p_i)**2
         lower = N*p_i
         chi_sq += upper/lower
-    print("  n = "+str(n))
-    print("  K = "+str(K))
-    print("  M = "+str(M))
-    print("  N = "+str(N))
-    print("  chi_sq = "+str(chi_sq))
+    if verbose:
+        print("  n = "+str(n))
+        print("  K = "+str(K))
+        print("  M = "+str(M))
+        print("  N = "+str(N))
+        print("  chi_sq = "+str(chi_sq))
     p = gammaincc(K/2.0, chi_sq/2.0)
     
-    success = (p >= 0.01)
-    return (success,p,None)
-
+    success = (p >= alpha)
+    return (success, p, None)

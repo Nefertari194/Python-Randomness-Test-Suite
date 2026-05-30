@@ -2,9 +2,7 @@
 from __future__ import print_function
 
 import math
-#from scipy.special import gamma, gammainc, gammaincc
 from gamma_functions import *
-#import scipy.stats
 
 def normcdf(n):
     return 0.5 * math.erfc(-n * math.sqrt(0.5))
@@ -15,10 +13,8 @@ def p_value(n,z):
     endk   = int(math.floor((((float(n)/z)-1.0)/4.0)))
     for k in range(startk,endk+1):
         c = (((4.0*k)+1.0)*z)/math.sqrt(n)
-        #d = scipy.stats.norm.cdf(c)
         d = normcdf(c)
         c = (((4.0*k)-1.0)*z)/math.sqrt(n)
-        #e = scipy.stats.norm.cdf(c)
         e = normcdf(c)
         sum_a = sum_a + d - e
 
@@ -27,26 +23,22 @@ def p_value(n,z):
     endk   = int(math.floor((((float(n)/z)-1.0)/4.0)))
     for k in range(startk,endk+1):
         c = (((4.0*k)+3.0)*z)/math.sqrt(n)
-        #d = scipy.stats.norm.cdf(c)
         d = normcdf(c)
         c = (((4.0*k)+1.0)*z)/math.sqrt(n)
-        #e = scipy.stats.norm.cdf(c)
         e = normcdf(c)
         sum_b = sum_b + d - e 
 
     p = 1.0 - sum_a + sum_b
     return p
     
-def cumulative_sums_test(bits):
+def cumulative_sums_test(bits, alpha=0.01, verbose=False):
     n = len(bits)
-    # Step 1
-    x = list()             # Convert to +1,-1
+    # 第一步：把 0/1 变成 -1/+1
+    x = list()
     for bit in bits:
-        #if bit == 0:
         x.append((bit*2)-1)
         
-    # Steps 2 and 3 Combined
-    # Compute the partial sum and records the largest excursion.
+    # 第二步：算累加和，并记录最大偏离
     pos = 0
     forward_max = 0
     for e in x:
@@ -60,17 +52,17 @@ def cumulative_sums_test(bits):
         if abs(pos) > backward_max:
             backward_max = abs(pos)
      
-    # Step 4
+    # 第三步
     p_forward  = p_value(n, forward_max)
     p_backward = p_value(n,backward_max)
     
-    success = ((p_forward >= 0.01) and (p_backward >= 0.01))
+    success = ((p_forward >= alpha) and (p_backward >= alpha))
     plist = [p_forward, p_backward]
 
-    if success:
-        print("PASS")
-    else:    
-        print("FAIL: Data not random")
+    if verbose:
+        print("  p_forward  = ", p_forward)
+        print("  p_backward = ", p_backward)
+
     return (success, None, plist)
 
 if __name__ == "__main__":
@@ -83,4 +75,3 @@ if __name__ == "__main__":
     
     print("success =",success)
     print("plist = ",plist)
-

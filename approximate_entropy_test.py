@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import math
-#from scipy.special import gamma, gammainc, gammaincc
 from gamma_functions import *
 
 def bits_to_int(bits):
@@ -10,7 +9,7 @@ def bits_to_int(bits):
         theint = (theint << 1) + bits[i]
     return theint
         
-def approximate_entropy_test(bits):
+def approximate_entropy_test(bits, alpha=0.01, verbose=False):
     n = len(bits)
     
     m = int(math.floor(math.log(n,2)))-6
@@ -19,52 +18,56 @@ def approximate_entropy_test(bits):
     if m >3 :
         m = 3
         
-    print("  n         = ",n)
-    print("  m         = ",m)
+    if verbose:
+        print("  n         = ", n)
+        print("  m         = ", m)
     
     Cmi = list()
     phi_m = list()
     for iterm in range(m,m+2):
-        # Step 1 
+        # 第一步
         padded_bits=bits+bits[0:iterm-1]
     
-        # Step 2
+        # 第二步
         counts = list()
         for i in range(2**iterm):
-            #print "  Pattern #%d of %d" % (i+1,2**iterm)
             count = 0
             for j in range(n):
                 if bits_to_int(padded_bits[j:j+iterm]) == i:
                     count += 1
             counts.append(count)
-            print("  Pattern %d of %d, count = %d" % (i+1,2**iterm, count))
+            if verbose:
+                print("  Pattern %d of %d, count = %d" % (i+1,2**iterm, count))
     
-        # step 3
+        # 第三步
         Ci = list()
         for i in range(2**iterm):
             Ci.append(float(counts[i])/float(n))
         
         Cmi.append(Ci)
     
-        # Step 4
+        # 第四步
         sum = 0.0
         for i in range(2**iterm):
             if (Ci[i] > 0.0):
-                sum += Ci[i]*math.log((Ci[i]/10.0))
+                sum += Ci[i]*math.log(Ci[i])
         phi_m.append(sum)
-        print("  phi(%d)    = %f" % (m,sum))
+        if verbose:
+            print("  phi(%d)    = %f" % (iterm, sum))
         
-    # Step 5 - let the loop steps 1-4 complete
+    # 第五步：上面的循环做完就行
     
-    # Step 6
+    # 第六步
     appen_m = phi_m[0] - phi_m[1]
-    print("  AppEn(%d)  = %f" % (m,appen_m))
+    if verbose:
+        print("  AppEn(%d)  = %f" % (m, appen_m))
     chisq = 2*n*(math.log(2) - appen_m)
-    print("  ChiSquare = ",chisq)
-    # Step 7
+    if verbose:
+        print("  ChiSquare = ", chisq)
+    # 第七步
     p = gammaincc(2**(m-1),(chisq/2.0))
     
-    success = (p >= 0.01)
+    success = (p >= alpha)
     return (success, p, None)
 
 if __name__ == "__main__":

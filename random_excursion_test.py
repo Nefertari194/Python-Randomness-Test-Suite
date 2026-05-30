@@ -3,29 +3,25 @@
 from __future__ import print_function
 
 import math
-#from scipy.special import gamma, gammainc, gammaincc
 from gamma_functions import *
 
-# RANDOM EXCURSION TEST
-def random_excursion_test(bits):
+# 随机游走测试
+def random_excursion_test(bits, alpha=0.01, verbose=False, min_J=500):
     n = len(bits)
 
-    x = list()             # Convert to +1,-1
+    x = list()             # 把 0/1 变成 -1/+1
     for bit in bits:
-        #if bit == 0:
         x.append((bit*2)-1)
 
-    #print "x=",x
-    # Build the partial sums
+    # 算累加和
     pos = 0
     s = list()
     for e in x:
         pos = pos+e
         s.append(pos)    
-    sprime = [0]+s+[0] # Add 0 on each end
+    sprime = [0]+s+[0] # 两头补 0
     
-    #print "sprime=",sprime
-    # Build the list of cycles
+    # 把序列拆成一段段的循环段
     pos = 1
     cycles = list()
     while (pos < len(sprime)):
@@ -39,24 +35,29 @@ def random_excursion_test(bits):
         pos = pos + 1
     
     J = len(cycles)
-    print("J="+str(J))    
+    if verbose:
+        print("J="+str(J))    
+    if J <= 0:
+        return False, None, {"reason": "循环数 J 太小（%d）" % J}
+    if (J < min_J):
+        return False, None, {"reason": "循环数 J 太小（%d < %d），这个测试结果不靠谱" % (J, min_J)}
     
     vxk = [['a','b','c','d','e','f'] for y in [-4,-3,-2,-1,1,2,3,4] ]
 
-    # Count Occurances  
+    # 统计每种状态出现次数
     for k in range(6):
         for index in range(8):
             mapping = [-4,-3,-2,-1,1,2,3,4]
             x = mapping[index]
             cyclecount = 0
-            #count how many cycles in which x occurs k times
+            # 统计有多少个循环段里，x 出现了 k 次
             for cycle in cycles:
                 oc = 0
-                #Count how many times x occurs in the current cycle
+                # 数一下这个循环段里 x 出现了几次
                 for pos in cycle:
                     if (pos == x):
                         oc += 1
-                # If x occurs k times, increment the cycle count
+                # 满足条件就加 1
                 if (k < 5):
                     if oc == k:
                         cyclecount += 1
@@ -66,7 +67,7 @@ def random_excursion_test(bits):
                             cyclecount += 1
             vxk[index][k] = cyclecount
     
-    # Table for reference random probabilities
+    # 参考概率表
     pixk=[[0.5     ,0.25   ,0.125  ,0.0625  ,0.0312 ,0.0312],
           [0.75    ,0.0625 ,0.0469 ,0.0352  ,0.0264 ,0.0791],
           [0.8333  ,0.0278 ,0.0231 ,0.0193  ,0.0161 ,0.0804],
@@ -88,18 +89,14 @@ def random_excursion_test(bits):
             chisq += top/bottom
         p = gammaincc(5.0/2.0,chisq/2.0)
         plist.append(p)
-        if p < 0.01:
+        if p < alpha:
             err = " Not Random"
             success = False
         else:
             err = ""
-        print("x = %1.0f\tchisq = %f\tp = %f %s"  % (x,chisq,p,err))
-    if (J < 500):
-        print("J too small (J < 500) for result to be reliable")
-    elif success:
-        print("PASS")
-    else:    
-        print("FAIL: Data not random")
+        if verbose:
+            print("x = %1.0f\tchisq = %f\tp = %f %s"  % (x,chisq,p,err))
+
     return (success, None, plist)
 
 if __name__ == "__main__":
@@ -108,4 +105,3 @@ if __name__ == "__main__":
     
     print("success =",success)
     print("plist = ",plist)
-

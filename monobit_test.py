@@ -12,19 +12,21 @@ def count_ones_zeroes(bits):
             ones += 1
         else:
             zeroes += 1
-    return (zeroes,ones)
+    return (zeroes, ones)
 
-def monobit_test(bits):
+def monobit_test(bits, alpha=0.01, verbose=False):
     n = len(bits)
+    if n == 0:
+        return False, None, {"reason": "数据是空的"}
     
-    zeroes,ones = count_ones_zeroes(bits)
+    zeroes, ones = count_ones_zeroes(bits)
     s = abs(ones-zeroes)
-    print("  Ones count   = %d" % ones)
-    print("  Zeroes count = %d" % zeroes)
+    if verbose:
+        print("  1 的个数 = %d" % ones)
+        print("  0 的个数 = %d" % zeroes)
     
     p = math.erfc(float(s)/(math.sqrt(float(n)) * math.sqrt(2.0)))
     
-    success = (p >= 0.01)
-    return (success,p,None)
+    success = (p >= alpha)
+    return (success, p, None)
     
-

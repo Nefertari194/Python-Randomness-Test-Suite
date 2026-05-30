@@ -3,12 +3,11 @@
 from __future__ import print_function
 
 import math
-#from scipy.special import gamma, gammainc, gammaincc
 from gamma_functions import *
 
 def berelekamp_massey(bits):
     n = len(bits)
-    b = [0 for x in bits]  #initialize b and c arrays
+    b = [0 for x in bits]  # 初始化两个数组
     c = [0 for x in bits]
     b[0] = 1
     c[0] = 1
@@ -17,11 +16,11 @@ def berelekamp_massey(bits):
     m = -1
     N = 0
     while (N < n):
-        #compute discrepancy
+        # 算偏差
         d = bits[N]
         for i in range(1,L+1):
             d = d ^ (c[i] & bits[N-i])
-        if (d != 0):  # If d is not zero, adjust poly
+        if (d != 0):  # d 不为 0 就调整多项式
             t = c[:]
             for i in range(0,n-N+m):
                 c[N-m+i] = c[N-m+i] ^ b[i] 
@@ -30,33 +29,32 @@ def berelekamp_massey(bits):
                 m = N
                 b = t 
         N = N +1
-    # Return length of generator and the polynomial
+    # 返回复杂度 L 和多项式
     return L , c[0:L]
     
-def linear_complexity_test(bits,patternlen=None):
+def linear_complexity_test(bits, patternlen=None, alpha=0.01, verbose=False):
     n = len(bits)
-    # Step 1. Choose the block size
-    if patternlen != None:
+    # 第一步：选块大小
+    if patternlen is not None:
         M = patternlen  
     else: 
         if n < 1000000:
-            print("Error. Need at least 10^6 bits")
-            #exit()
-            return False,0.0,None
+            return False, None, {"reason": "长度不够：这个测试默认要至少 10^6 位"}
         M = 512
     K = 6 
     N = int(math.floor(n/M))
-    print("  M = ", M)
-    print("  N = ", N)
-    print("  K = ", K)    
+    if verbose:
+        print("  M = ", M)
+        print("  N = ", N)
+        print("  K = ", K)    
     
-    # Step 2 Compute the linear complexity of the blocks
+    # 第二步：算每个块的线性复杂度
     LC = list()
     for i in range(N):
         x = bits[(i*M):((i+1)*M)]
         LC.append(berelekamp_massey(x)[0])
     
-    # Step 3 Compute mean
+    # 第三步：算均值
     a = float(M)/2.0
     b = ((((-1)**(M+1))+9.0))/36.0
     c = ((M/3.0) + (2.0/9.0))/(2**M)
@@ -67,7 +65,7 @@ def linear_complexity_test(bits,patternlen=None):
         x = ((-1.0)**M) * (LC[i] - mu) + (2.0/9.0)
         T.append(x)
         
-    # Step 4 Count the distribution over Ticket
+    # 第四步：统计落在哪个区间
     v = [0,0,0,0,0,0,0]
     for t in T:
         if t <= -2.5:
@@ -85,16 +83,18 @@ def linear_complexity_test(bits,patternlen=None):
         else:
             v[6] += 1
 
-    # Step 5 Compute Chi Square Statistic
+    # 第五步：算卡方
     pi = [0.010417,0.03125,0.125,0.5,0.25,0.0625,0.020833]
     chisq = 0.0
     for i in range(K+1):
         chisq += ((v[i] - (N*pi[i]))**2.0)/(N*pi[i])
-    print("  chisq = ",chisq)
-    # Step 6 Compute P Value
+    if verbose:
+        print("  chisq = ", chisq)
+    # 第六步：算 p 值
     P = gammaincc((K/2.0),(chisq/2.0))
-    print("  P = ",P)
-    success = (P >= 0.01)
+    if verbose:
+        print("  P = ", P)
+    success = (P >= alpha)
     return (success, P, None)
     
 if __name__ == "__main__":
