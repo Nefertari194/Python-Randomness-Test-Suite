@@ -6,21 +6,21 @@ import unicodedata
 
 from bitio import iter_bit_sequences
 
-from approximate_entropy_test import approximate_entropy_test
-from binary_matrix_rank_test import binary_matrix_rank_test
-from cumulative_sums_test import cumulative_sums_test
-from dft_test import dft_test
-from frequency_within_block_test import frequency_within_block_test
-from linear_complexity_test import linear_complexity_test
-from longest_run_ones_in_a_block_test import longest_run_ones_in_a_block_test
-from maurers_universal_test import maurers_universal_test
-from monobit_test import monobit_test
-from non_overlapping_template_matching_test import non_overlapping_template_matching_test
-from overlapping_template_matching_test import overlapping_template_matching_test
-from random_excursion_test import random_excursion_test
-from random_excursion_variant_test import random_excursion_variant_test
-from runs_test import runs_test
-from serial_test import serial_test
+from approximate_entropy import approximate_entropy
+from binary_matrix_rank import binary_matrix_rank
+from cumulative_sums import cumulative_sums
+from frequency_block import frequency_block
+from frequency_monobit import frequency_monobit
+from linear_complexity import linear_complexity
+from longest_run import longest_run_ones
+from random_excursions import random_excursions
+from random_excursions_variant import random_excursions_variant
+from runs import runs
+from serial_patterns import serial_patterns
+from spectral_dft import spectral_dft
+from template_non_overlapping import template_non_overlapping
+from template_overlapping import template_overlapping
+from universal_maurer import universal_maurer
 
 
 def _format_p_values(p_values):
@@ -215,21 +215,21 @@ def run_sp800_22(config):
         enabled = set(enabled)
 
     test_table = [
-        ("monobit", lambda b: monobit_test(b, alpha=alpha, verbose=verbose)),
-        ("frequency_within_block", lambda b: frequency_within_block_test(b, alpha=alpha, verbose=verbose)),
-        ("runs", lambda b: runs_test(b, alpha=alpha, verbose=verbose)),
-        ("dft", lambda b: dft_test(b, alpha=alpha, verbose=verbose)),
-        ("cumulative_sums", lambda b: cumulative_sums_test(b, alpha=alpha, verbose=verbose)),
-        ("approximate_entropy", lambda b: approximate_entropy_test(b, alpha=alpha, verbose=verbose)),
-        ("serial", lambda b: serial_test(b, patternlen=params.get("serial_m"), alpha=alpha, verbose=verbose, max_m=int(params.get("serial_max_m", 16)))),
-        ("binary_matrix_rank", lambda b: binary_matrix_rank_test(b, M=int(params.get("rank_M", 32)), Q=int(params.get("rank_Q", 32)), alpha=alpha, verbose=verbose)),
-        ("longest_run_ones", lambda b: longest_run_ones_in_a_block_test(b, alpha=alpha, verbose=verbose)),
-        ("maurers_universal", lambda b: maurers_universal_test(b, patternlen=params.get("maurers_L"), initblocks=params.get("maurers_Q"), alpha=alpha, verbose=verbose)),
-        ("linear_complexity", lambda b: linear_complexity_test(b, patternlen=params.get("linear_M"), alpha=alpha, verbose=verbose)),
-        ("non_overlapping_template", lambda b: non_overlapping_template_matching_test(b, alpha=alpha, verbose=verbose)),
-        ("overlapping_template", lambda b: overlapping_template_matching_test(b, alpha=alpha, verbose=verbose)),
-        ("random_excursion", lambda b: random_excursion_test(b, alpha=alpha, verbose=verbose)),
-        ("random_excursion_variant", lambda b: random_excursion_variant_test(b, alpha=alpha, verbose=verbose)),
+        ("monobit", lambda b: frequency_monobit(b, alpha=alpha, verbose=verbose)),
+        ("frequency_within_block", lambda b: frequency_block(b, alpha=alpha, verbose=verbose)),
+        ("runs", lambda b: runs(b, alpha=alpha, verbose=verbose)),
+        ("dft", lambda b: spectral_dft(b, alpha=alpha, verbose=verbose)),
+        ("cumulative_sums", lambda b: cumulative_sums(b, alpha=alpha, verbose=verbose)),
+        ("approximate_entropy", lambda b: approximate_entropy(b, alpha=alpha, verbose=verbose)),
+        ("serial", lambda b: serial_patterns(b, patternlen=params.get("serial_m"), alpha=alpha, verbose=verbose, max_m=int(params.get("serial_max_m", 16)))),
+        ("binary_matrix_rank", lambda b: binary_matrix_rank(b, m=int(params.get("rank_M", 32)), q=int(params.get("rank_Q", 32)), alpha=alpha, verbose=verbose)),
+        ("longest_run_ones", lambda b: longest_run_ones(b, alpha=alpha, verbose=verbose)),
+        ("maurers_universal", lambda b: universal_maurer(b, patternlen=params.get("maurers_L"), initblocks=params.get("maurers_Q"), alpha=alpha, verbose=verbose)),
+        ("linear_complexity", lambda b: linear_complexity(b, patternlen=params.get("linear_M"), alpha=alpha, verbose=verbose)),
+        ("non_overlapping_template", lambda b: template_non_overlapping(b, alpha=alpha, verbose=verbose)),
+        ("overlapping_template", lambda b: template_overlapping(b, alpha=alpha, verbose=verbose)),
+        ("random_excursion", lambda b: random_excursions(b, alpha=alpha, verbose=verbose)),
+        ("random_excursion_variant", lambda b: random_excursions_variant(b, alpha=alpha, verbose=verbose)),
     ]
 
     results = []
@@ -296,21 +296,21 @@ def run_sp800_22_batch(config):
 
     expected = 1.0 - alpha
     test_table = [
-        ("monobit", lambda b: monobit_test(b, alpha=alpha, verbose=verbose)),
-        ("frequency_within_block", lambda b: frequency_within_block_test(b, alpha=alpha, verbose=verbose, block_size=params.get("freq_block_size"), num_blocks=params.get("freq_num_blocks"))),
-        ("runs", lambda b: runs_test(b, alpha=alpha, verbose=verbose)),
-        ("dft", lambda b: dft_test(b, alpha=alpha, verbose=verbose)),
-        ("cumulative_sums", lambda b: cumulative_sums_test(b, alpha=alpha, verbose=verbose)),
-        ("approximate_entropy", lambda b: approximate_entropy_test(b, alpha=alpha, verbose=verbose)),
-        ("serial", lambda b: serial_test(b, patternlen=params.get("serial_m"), alpha=alpha, verbose=verbose, max_m=int(params.get("serial_max_m", 16)))),
-        ("binary_matrix_rank", lambda b: binary_matrix_rank_test(b, M=int(params.get("rank_M", 32)), Q=int(params.get("rank_Q", 32)), alpha=alpha, verbose=verbose)),
-        ("longest_run_ones", lambda b: longest_run_ones_in_a_block_test(b, alpha=alpha, verbose=verbose)),
-        ("maurers_universal", lambda b: maurers_universal_test(b, patternlen=params.get("maurers_L"), initblocks=params.get("maurers_Q"), alpha=alpha, verbose=verbose)),
-        ("linear_complexity", lambda b: linear_complexity_test(b, patternlen=params.get("linear_M"), alpha=alpha, verbose=verbose)),
-        ("non_overlapping_template", lambda b: non_overlapping_template_matching_test(b, alpha=alpha, verbose=verbose, template_group=params.get("nonoverlap_group", 0), template_index=params.get("nonoverlap_index", 0))),
-        ("overlapping_template", lambda b: overlapping_template_matching_test(b, blen=params.get("overlap_m", 6), alpha=alpha, verbose=verbose, block_size=params.get("overlap_block_size"), num_blocks=params.get("overlap_num_blocks"), allow_degraded=bool(params.get("overlap_allow_degraded", False)))),
-        ("random_excursion", lambda b: random_excursion_test(b, alpha=alpha, verbose=verbose, min_J=int(params.get("random_excursion_min_J", 500)))),
-        ("random_excursion_variant", lambda b: random_excursion_variant_test(b, alpha=alpha, verbose=verbose, min_J=int(params.get("random_excursion_variant_min_J", 500)))),
+        ("monobit", lambda b: frequency_monobit(b, alpha=alpha, verbose=verbose)),
+        ("frequency_within_block", lambda b: frequency_block(b, alpha=alpha, verbose=verbose, block_size=params.get("freq_block_size"), num_blocks=params.get("freq_num_blocks"))),
+        ("runs", lambda b: runs(b, alpha=alpha, verbose=verbose)),
+        ("dft", lambda b: spectral_dft(b, alpha=alpha, verbose=verbose)),
+        ("cumulative_sums", lambda b: cumulative_sums(b, alpha=alpha, verbose=verbose)),
+        ("approximate_entropy", lambda b: approximate_entropy(b, alpha=alpha, verbose=verbose)),
+        ("serial", lambda b: serial_patterns(b, patternlen=params.get("serial_m"), alpha=alpha, verbose=verbose, max_m=int(params.get("serial_max_m", 16)))),
+        ("binary_matrix_rank", lambda b: binary_matrix_rank(b, m=int(params.get("rank_M", 32)), q=int(params.get("rank_Q", 32)), alpha=alpha, verbose=verbose)),
+        ("longest_run_ones", lambda b: longest_run_ones(b, alpha=alpha, verbose=verbose)),
+        ("maurers_universal", lambda b: universal_maurer(b, patternlen=params.get("maurers_L"), initblocks=params.get("maurers_Q"), alpha=alpha, verbose=verbose)),
+        ("linear_complexity", lambda b: linear_complexity(b, patternlen=params.get("linear_M"), alpha=alpha, verbose=verbose)),
+        ("non_overlapping_template", lambda b: template_non_overlapping(b, alpha=alpha, verbose=verbose, template_group=params.get("nonoverlap_group", 0), template_index=params.get("nonoverlap_index", 0))),
+        ("overlapping_template", lambda b: template_overlapping(b, blen=params.get("overlap_m", 6), alpha=alpha, verbose=verbose, block_size=params.get("overlap_block_size"), num_blocks=params.get("overlap_num_blocks"), allow_degraded=bool(params.get("overlap_allow_degraded", False)))),
+        ("random_excursion", lambda b: random_excursions(b, alpha=alpha, verbose=verbose, min_J=int(params.get("random_excursion_min_J", 500)))),
+        ("random_excursion_variant", lambda b: random_excursions_variant(b, alpha=alpha, verbose=verbose, min_J=int(params.get("random_excursion_variant_min_J", 500)))),
     ]
 
     def ensure_stat(name):
